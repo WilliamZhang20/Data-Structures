@@ -1,5 +1,6 @@
 #include "B-Tree-Node.h"
 #include <utility>
+#include <queue>
 #include <iostream>
 
 template <typename T>
@@ -7,13 +8,13 @@ class BTree {
 public:
     BTree(int t) {
         this->t = t;
-        root = new BTreeNode();
+        root = new BTreeNode<T>();
         root->leaf = true;
         root->n = 0;
     }
-    void splitChild(BtreeNode* x, int i) {
-        BTreeNode* z = new BTreeNode(); // new node to the right
-        BTreeNode* y = x->children[i]; // original node that was oversize
+    void splitChild(BTreeNode<T>* x, int i) {
+        BTreeNode<T>* z = new BTreeNode(); // new node to the right
+        BTreeNode<T>* y = x->children[i]; // original node that was oversize
         z->leaf = y->leaf;
         z->n = t - 1;
         for(int j = 0; j<t-1; j++) {
@@ -31,7 +32,7 @@ public:
         x->n += 1;
     }
     void insert(T k) {
-        BTreeNode* r = root;
+        BTreeNode<T>* r = root;
         if(root->n == 2*t - 1) {
             BTreeNode* s = new BTreeNode();
             root = s;
@@ -67,7 +68,7 @@ public:
         }
     }
     std::pair<BTreeNode*, int> search(BTreeNode* node, T k) {
-        BTreeNode* x = node;
+        BTreeNode<T>* x = node;
         int i = 1;
         while(i <= x->n && k > x->keys[i]) {
             i += 1;
@@ -78,8 +79,17 @@ public:
         return search(x->keys[i], k);
     }
     void printBTree() {
-        // going in a pre-order traversal
-        
+        // going in a pre-order traversal (BFS)
+        std::queue<BTreeNode*> q;
+        q.push(root);
+        while(!q.empty()) {
+            BTreeNode* curr = q.top();
+            q.pop();
+            curr->print();
+            for(int i=0; i<curr->children.size(); i++) {
+                q.push(curr->children[i]);
+            }
+        }
     }
 private:
     BTreeNode<T>* root;
