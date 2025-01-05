@@ -68,17 +68,27 @@ private:
         z->leaf = y->leaf;
         z->n = t - 1;
 
+        // Move the last (t - 1) keys from y to z
         for (int j = 0; j < t - 1; j++) {
             z->keys.push_back(y->keys[j + t]);
         }
+
         if (!y->leaf) {
             for (int j = 0; j < t; j++) {
                 z->children.push_back(y->children[j + t]);
             }
+            // Erase transferred children from y
+            y->children.erase(y->children.begin() + t, y->children.end());
         }
+
+        // Reduce the number of keys in y
+        y->keys.erase(y->keys.begin() + t - 1, y->keys.end());
         y->n = t - 1;
 
+        // insert child z into z's children
         x->children.insert(x->children.begin() + i + 1, z);
+
+        // insert middle key into top page
         x->keys.insert(x->keys.begin() + i, y->keys[t - 1]);
         x->n += 1;
     }
