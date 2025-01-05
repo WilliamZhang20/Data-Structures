@@ -18,8 +18,9 @@ public:
     std::vector<BTreeNode*> children;
     bool leaf;
     void printKeys() {
-        for(int i=0; i<keys.size(); i++) {
+        for(int i=0; i<n; i++) {
             std::cout << keys[i] << " ";
         }
+        std::cout << "\t";
     }
 };

@@ -2,15 +2,18 @@
 #include "B-Tree.h"
 
 int main() {
-    BTree<int> tree(2);
-    std::cout << "before insertions\n";
-    tree.insert(2);
-    tree.insert(4);
-    tree.insert(1);
-    std::cout << "THIRD complete\n";
-    tree.printBTree();
-    tree.insert(5);
-    std::cout << "insertions complete\n";
+    BTree<char> tree(2);
+    tree.insert('Q');
+    tree.insert('V');
+    tree.insert('Z');
+    tree.insert('L');
+    tree.insert('N');
+    tree.insert('S');
+    tree.insert('E');
+    tree.insert('P');
+    tree.insert('O');
+    tree.insert('M');
+    tree.insert('F');
     tree.printBTree();
     return 0;
 }
