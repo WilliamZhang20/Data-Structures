@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 
 /*
@@ -6,7 +7,7 @@ AVL Tree
 
 template <typename T>
 class AVLTree {
-    class Node; // NESTED CLASS
+    class Node; // Nested class
     int size;
     Node* _root;
 public:

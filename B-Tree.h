@@ -13,6 +13,7 @@ public:
         root->leaf = true;
         root->n = 0;
     }
+
     void insert(T k) {
         BTreeNode<T>* r = root;
         if(root->n == 2*t - 1) {
@@ -27,6 +28,7 @@ public:
             insert_nonfull(r, k);
         }
     }
+
     std::pair<BTreeNode<T>*, int> search(BTreeNode<T>* node, T k) {
         BTreeNode<T>* x = node;
         int i = 1;
@@ -38,6 +40,7 @@ public:
         }
         return search(x->keys[i], k);
     }
+
     void printBTree() {
         // going in a pre-order traversal (BFS)
         std::queue<std::pair<BTreeNode<T>*, int>> q;
@@ -56,6 +59,10 @@ public:
             }
         }
         std::cout << "\n";
+    }
+
+    void delete(T k) {
+        
     }
 private:
     BTreeNode<T>* root;
