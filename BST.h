@@ -24,20 +24,65 @@ public:
     Node<T>* maxNode(); // max but node
     T maxVal();
     T minVal();
-    Node<T>* minNode();
+    Node<T>* minNode(Node<T>* node);
 
     void insert(T key);
     Node<T>* search(T key);
     void deleteNode(T val); // delete node
 
-    Node<T>* predecessor(Node* node); // preceding node addr
-    Node<T>* successor(Node* node); // successor node addr
+    Node<T>* predecessor(Node<T>* node); // preceding node addr
+    Node<T>* successor(Node<T>* node); // successor node addr
 
     void printInOrder(); // in order traversal
     bool validate(); // validation
 private:
     Node<T>* root;
+
+    void transplant(Node<T>* u, Node<T>* v);
+    void deleteHelper(Node<T>* node, T key);
 };
+
+template <typename T>
+void BST<T>::deleteNode(T key) {
+    deleteHelper(root, key);
+}
+
+template <typename T>
+void BST<T>::transplant(Node<T>* u, Node<T>* v) { // make v replace u
+    if(u.parent == nullptr) {
+        root = v;
+    }
+    else if(u == u.parent.left) {
+        u.parent.left = v;
+    }
+    else {
+        u.p.right = v;
+    }
+    if(v != nullptr) {
+        v.parent = u.parent;
+    }
+}
+
+template <typename T>
+void BST<T>::deleteHelper(Node<T>* z, T key) {
+    if(z.left == nullptr) {
+        transplant(z, z.right); // no left child - call successor
+    }
+    else if(z.right == nullptr) {
+        transplant(z, z.left); // has left but no right - replace by predecessor
+    }
+    else { // has two children
+        Node<T>* y = minNode(z.right);
+        if(y.parent != z) {
+            transplant(y, y.right);
+            y.right = z.right;
+            y.right.parent = y;
+        }
+        transplant(z, y);
+        y.left = z.left;
+        y.left.parent = y;
+    }
+}
 
 template <typename T>
 Node<T>* BST<T>::maxNode() {
@@ -62,8 +107,8 @@ T BST<T>::maxVal() {
 }
 
 template <typename T>
-Node<T>* BST<T>::minNode() {
-    Node<T>* x = root;
+Node<T>* BST<T>::minNode(Node<T>* node) {
+    Node<T>* x = node;
     while(x != nullptr && x.left != nullptr) {
         x = x.left;
     }
