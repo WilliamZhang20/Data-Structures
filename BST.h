@@ -38,13 +38,31 @@ public:
 private:
     Node<T>* root;
 
+    bool validateHelper(Node<T>* u, T low, T high);
     void transplant(Node<T>* u, Node<T>* v);
-    void deleteHelper(Node<T>* node, T key);
+    void deleteHelper(Node<T>* node);
 };
 
 template <typename T>
+bool BST<T>::validate() {
+    return validateHelper(root, minVal(), maxVal());
+}   
+
+template <typename T>
+bool BST<T>::validateHelper(Node<T>* u, T low, T high) {
+    if(!u) {
+        return true; // base
+    }
+    if(u->key < low || u->key > high) {
+        return false;
+    }
+    return validateHelper(u->left, low, u->key) && validateHelper(u->right, u->key, high);
+}
+
+template <typename T>
 void BST<T>::deleteNode(T key) {
-    deleteHelper(root, key);
+    Node<T>* node = search(key);
+    deleteHelper(node);
 }
 
 template <typename T>
@@ -64,7 +82,7 @@ void BST<T>::transplant(Node<T>* u, Node<T>* v) { // make v replace u
 }
 
 template <typename T>
-void BST<T>::deleteHelper(Node<T>* z, T key) {
+void BST<T>::deleteHelper(Node<T>* z) {
     if(z.left == nullptr) {
         transplant(z, z.right); // no left child - call successor
     }
@@ -95,7 +113,7 @@ Node<T>* BST<T>::maxNode() {
 
 template <typename T>
 T BST<T>::maxVal() {
-    Node* x = root;
+    Node<T>* x = root;
     while(x != nullptr && x.right != nullptr) {
         x = x.right;
     }
