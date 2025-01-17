@@ -44,6 +44,34 @@ private:
 };
 
 template <typename T>
+Node<T>* BST<T>::predecessor(Node<T>* node) {
+    if (node->left != nullptr) {
+        return minNode(node->left); // Predecessor is the max node in the left subtree
+    }
+
+    Node<T>* parent = node->parent;
+    while (parent != nullptr && node == parent->left) {
+        node = parent;
+        parent = parent->parent;
+    }
+    return parent; // Find lowest ancestor whose left child is also ancestor
+}
+
+template <typename T>
+Node<T>* BST<T>::successor(Node<T>* node) {
+    if (node->right != nullptr) {
+        return minNode(node->right); // Successor is the min node in the right subtree
+    }
+
+    Node<T>* parent = node->parent;
+    while (parent != nullptr && node == parent->right) {
+        node = parent;
+        parent = parent->parent;
+    }
+    return parent; // Find lowest ancestor whose right child is also an ancestor
+}
+
+template <typename T>
 bool BST<T>::validate() {
     return validateHelper(root, minVal(), maxVal());
 }   
