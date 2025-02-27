@@ -178,10 +178,3 @@ template <typename T>
 void RBTree<T>::print() {
 
 }
-
-int main() {
-    std::cout << "Start of program\n";
-    RBTree<int> test;
-
-    return 0;
-}
