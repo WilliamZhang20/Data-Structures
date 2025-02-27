@@ -127,24 +127,38 @@ void RBTree<T>::insert(T val) {
 template <typename T>
 void RBTree<T>::insertFixup(RBTreeNode<T>* z) {
     while(z->parent->color == RED) {
-        if(z->parent == z->parent->parent->left) {
+        if(z->parent == z->parent->parent->left) { // z's parent is a LEFT child
             RBTreeNode<T>* y = z->parent->parent->right; // z's uncle 
-            if(y->color == RED) {
-                z->parent->color = BLACK;
+            if(y->color == RED) { // parent & uncle are both red - CASE 1
+                z->parent->color = BLACK; // both of the grandparent's children are blackened
                 y->color = BLACK;
-                z->parent->parent->color = RED;
-                z = z->parent->parent;
+                z->parent->parent->color = RED; // redden z's grandparent
+                z = z->parent->parent; // transfer the z pointer to the grandparent
             } else {
-                if(z == z->parent->right) {
+                if(z == z->parent->right) { // case 2 - z is a RIGHT Child
                     z = z->parent;
-                    leftRotate(z);
+                    leftRotate(z); // then rotate over
                 }
                 z->parent->color = BLACK;
                 z->parent->parent->color = RED;
                 rightRotate(z->parent->parent);
             }
         } else {
-
+            RBTreeNode<T>* y = z->parent->parent->left; // z's other uncle 
+            if(y->color == RED) { // parent & uncle are both red - CASE 1
+                z->parent->color = BLACK; // both of the grandparent's children are blackened
+                y->color = BLACK;
+                z->parent->parent->color = RED; // redden z's grandparent
+                z = z->parent->parent; // transfer the z pointer to the grandparent
+            } else {
+                if(z == z->parent->left) { // case 2 - z is a RIGHT Child
+                    z = z->parent;
+                    rightRotate(z); // then rotate over
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                leftRotate(z->parent->parent);
+            }
         }
     }
     root->color = BLACK;
