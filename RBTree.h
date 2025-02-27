@@ -1,42 +1,173 @@
-#ifndef RBTREE_H
-#define RBTREE_H
+#pragma once
 #include <iostream>
 
 typedef enum { RED, BLACK } Color;
 
-struct RBTreeNode {
-    int data;
-    RBTreeNode* parent;
-    RBTreeNode* left;
-    RBTreeNode* right;
-    Color color;
-
-    RBTreeNode(int val) 
-        : data(val), parent(nullptr), left(nullptr), right(nullptr), color(RED) {}
+template <typename T>
+class RBTreeNode {
+public:
+    RBTreeNode<T>* parent;
+    RBTreeNode<T>* left;
+    RBTreeNode<T>* right;
+    Color color_;
+    T key;
+    RBTreeNode(T val, Color color=RED) 
+        : key(val), parent(nullptr), left(nullptr), right(nullptr), color_(color) {}
+    
+    ~RBTreeNode() {
+        delete left;
+        delete right;
+    }
 };
 
+// Since template - should include error handling if type does not overload <  or > 
+template <typename T>
 class RBTree {
 private:
-    RBTreeNode* root;
-    RBTreeNode* sentinel;
+    RBTreeNode<T>* root;
+    RBTreeNode<T>* sentinel;
 
-    void leftRotate(RBTreeNode* x);
-    void rightRotate(RBTreeNode* x);
-    void insertFix(RBTreeNode* k);
+    void leftRotate(RBTreeNode<T>* x);
+    void rightRotate(RBTreeNode<T>* x);
+    void insertFixup(RBTreeNode<T>* z); // see CLRS for why...
+    void deleteFixUp(RBTreeNode<T>* z);
 
-public:
+    void transplant(RBTreeNode<T>* u, RBTreeNode<T>* v); // replaces subtree of u with that of v
+
+public: // simple API...
     RBTree();
     ~RBTree();
 
-    void insert(int key);
-    void remove(int key);
-    RBTreeNode* search(int key) const;
-    RBTreeNode* predecessor() const;
-    RBTreeNode* successor() const;
+    void insert(T val);
+    void remove(T val);
+    RBTreeNode<T>* search(T val) const;
 
-    void inOrderTraversal() const;
-    void preOrderTraversal() const;
-    void postOrderTraversal() const;
+    void print();
 };
 
-#endif // RBTREE_H
+template <typename T>
+RBTree<T>::RBTree() {
+    sentinel = new RBTreeNode(0, BLACK);
+    sentinel->parent = sentinel; // sentinel's parent is itself - for safety
+    root = sentinel;
+}
+
+template <typename T>
+RBTree<T>::~RBTree() {
+    delete sentinel;
+    delete root;
+}
+
+template <typename T>
+void RBTree<T>::leftRotate(RBTreeNode<T>* x) { // throw X to the left - replace with its right child
+    RBTreeNode<T>* y = x->right;
+    x->right = y->left; // y's left subtree --> x's right subtree
+    if(y->left != sentinel) { // if it wasn't empty
+        y->left->parent = x; // then ensure that its parent is X
+    }
+    y->parent = x->parent;
+    if(x->parent = sentinel) {
+        root = y; // will already have a parent - the sentinel!
+    } else if(x == x->parent->left) {
+        x->parent->left = y;
+    } else {
+        x->parent->right = y;
+    }
+    y->left = x;
+    x->parent = y;
+}
+
+template <typename T>
+void RBTree<T>::rightRotate(RBTreeNode<T>* x) { // throw X to the right - replace with its left child
+    RBTreeNode<T>* y = x->left;
+    x->left = y->right; // y's left subtree --> x's right subtree
+    if(y->right != sentinel) { // if it wasn't empty
+        y->right->parent = x; // then ensure that its parent is X
+    }
+    y->parent = x->parent;
+    if(x->parent = sentinel) {
+        root = y;
+    } else if(x == x->parent->left) {
+        x->parent->left = y;
+    } else {
+        x->parent->right = y;
+    }
+    y->right = x;
+    x->parent = y;
+}
+
+template <typename T>
+void RBTree<T>::insert(T val) {
+    // Create new node z
+    RBTreeNode<T>* z = new RBTreeNode<T>*(val, RED);
+    // Insertion process below
+    RBTreeNode<T>* x = root; // node compared with z
+    RBTreeNode<T>* y = sentinel; // y is parent of z
+    while(x != sentinel) { // descend until reaching sentinel
+        y = x;
+        if(z->key < y->key) {
+            x = x->left;
+        } else {
+            x = x->right;
+        }
+    }
+    z->parent = y; // found the location - insert z with parent y - decide if root, left or right
+    if(y==sentinel) {
+        root = z; // tree was empty
+    } else if(z->key < y->key) {
+        y->left = z;
+    } else {
+        y->right = z;
+    }
+    z->left = sentinel; // "insertion happens at leaf"
+    z->right = sentinel;
+    this->insertFixup(z);
+}
+
+template <typename T>
+void RBTree<T>::insertFixup(RBTreeNode<T>* z) {
+    while(z->parent->color == RED) {
+        if(z->parent == z->parent->parent->left) {
+            RBTreeNode<T>* y = z->parent->parent->right; // z's uncle 
+            if(y->color == RED) {
+                z->parent->color = BLACK;
+                y->color = BLACK;
+                z->parent->parent->color = RED;
+                z = z->parent->parent;
+            } else {
+                if(z == z->parent->right) {
+                    z = z->parent;
+                    leftRotate(z);
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                rightRotate(z->parent->parent);
+            }
+        } else {
+
+        }
+    }
+    root->color = BLACK;
+}
+
+template <typename T>
+void RBTree<T>::remove(T val) {
+
+}
+
+template <typename T>
+RBTreeNode<T>* RBTree<T>::search(T val) const {
+
+}
+
+template <typename T>
+void RBTree<T>::print() {
+
+}
+
+int main() {
+    std::cout << "Start of program\n";
+    RBTree<int> test;
+
+    return 0;
+}

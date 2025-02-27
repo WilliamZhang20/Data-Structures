@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <utility>
 #define TEMPLATE template <typename T> // custom macro!!!
 
 /*
@@ -71,17 +72,19 @@ AVLTree<T>::~AVLTree() {
 
 TEMPLATE
 void AVLTree<T>::push(T&& key) {
-
+    Node::push(root_, std::forward<T>(key));
 }
 
 TEMPLATE
 void AVLTree<T>::erase(const T& key) {
-
+    Node::erase(root_, key);
 }
 
 TEMPLATE
 void AVLTree<T>::print() const {
-
+    if(!this->root_) {
+        std::cout << "Tree is empty\n";
+    }
 }
 
 /*
@@ -117,10 +120,11 @@ public:
     Node& successor();
 
     // static methods for push/erase - no overhead for objects
-    static void push(T& key);
-    static void erase(const T& key);
-    static void balanceSubtree(Node** parent, Node* root);
+    static void push(Node* curr, T&& key);
+    static void erase(Node* curr, const T& key);
+    static void balanceSubtree(Node** node);
 private:
+    void updateParams();
     void RotateLeft(Node& x);
     void RotateRight(Node& x);
 };
@@ -153,7 +157,24 @@ AVLTree<T>::Node::~Node() { // note: parent not in heap
 }
 
 TEMPLATE
-void AVLTree<T>::Node::push(T& key) {
+void AVLTree<T>::Node::push(Node* curr, T&& key) {
+    if(!curr) {
+        curr = new Node(std::forward<T>(key));
+        return;
+    }
+    if(key < curr->key) {
+        push(curr->left, std::forward<T>(key));
+    } else if(key > curr->key) {
+        push(curr->right, std::forward<T>(key));
+    } else {
+        return; // prohibit identical elements
+    }
+
+    balanceSubtree(curr);
+}
+
+TEMPLATE
+void AVLTree<T>::Node::balanceSubtree(Node** node) {
     
 }
 
