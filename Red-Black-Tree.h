@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <queue>
 #include <utility>
@@ -200,7 +201,7 @@ void RBTree<T>::transplant(RBTreeNode<T>* u, RBTreeNode<T>* v) {
 
 template <typename T>
 void RBTree<T>::remove(T val) {
-    RBTreeNode<T>* z = new RBTreeNode<T>(val, RED);
+    RBTreeNode<T>* z = search(val);
     RBTreeNode<T>* y = z;
     RBTreeNode<T>* x = nullptr;
     Color y_Orig = y->color;
@@ -240,12 +241,23 @@ void RBTree<T>::removeFixup(RBTreeNode<T>* z) {
 
 template <typename T>
 RBTreeNode<T>* RBTree<T>::search(T val) const {
-
+    RBTreeNode<T>* x = root; // node compared with z
+    while(x != sentinel) { // descend until reaching sentinel
+        if(val == x->key) {
+            return x;
+        }
+        else if(val < x->key) {
+            x = x->left;
+        } else {
+            x = x->right;
+        }
+    }
+    return nullptr;
 }
 
 template <typename T>
 void RBTree<T>::print() {
-    int height = (log(size + 1) / log(2)) + 1;  // Calculate tree height
+    int height = ceil(log(size + 1.0)/log(2.0));  // Calculate tree height
     std::queue<std::pair<RBTreeNode<T>*, int>> treeQ;
     treeQ.push({root, 0});
     std::vector<std::vector<std::string>> levels; 
