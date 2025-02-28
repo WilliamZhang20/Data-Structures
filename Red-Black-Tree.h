@@ -262,30 +262,28 @@ void RBTree<T>::print() {
     treeQ.push({root, 0});
     int level = -1;
 
-    int numSpaces = (1 << (height)) * 2; 
-    
+    int numSpaces = (1 << (height)) * 2;
+
     while (!treeQ.empty()) {
         std::pair<RBTreeNode<T>*, int> curr = treeQ.front();
         treeQ.pop();
-        auto printSpaces = [&]() {
-            for(int i=0; i<numSpaces; i++) { std::cout << " ";}
-            std::cout << " ";
-            for(int i=0; i<numSpaces; i++) { std::cout << " ";}
+        auto printSpaces = [&](int amount=1) {
+            for(int i=0; i<amount; i++) { std::cout << " ";}
         };
         if (curr.second > level) {
             level = curr.second;
             std::cout << "\n";
-            for(int i=0; i<numSpaces; i++) { std::cout << " "; }
             numSpaces /= 2;
+            printSpaces(numSpaces + 2*(height - level));
         }
         
         if (curr.first == sentinel) { 
-            printSpaces();
+            printSpaces(2*numSpaces + 1);
             continue; 
         }
         std::cout << curr.first->key;
-        std::cout << (curr.first->color == RED ? "*" : "^");
-        printSpaces();
+        // std::cout << (curr.first->color == RED ? "*" : "^");
+        printSpaces(2*numSpaces + 1);
         treeQ.push({curr.first->left, curr.second + 1});
         treeQ.push({curr.first->right, curr.second + 1});
     }
