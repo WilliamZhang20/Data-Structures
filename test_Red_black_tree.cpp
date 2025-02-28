@@ -14,6 +14,11 @@ int main() {
         else if(input == "p") {
             tree.print();
         }
+        else if(input == "d") {
+            int val;
+            std::cin >> val;
+            tree.remove(val);
+        }
         else {
             break;
         }

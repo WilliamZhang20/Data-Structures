@@ -34,7 +34,7 @@ private:
     void leftRotate(RBTreeNode<T>* x);
     void rightRotate(RBTreeNode<T>* x);
     void insertFixup(RBTreeNode<T>* z); // see CLRS for why...
-    void removeFixup(RBTreeNode<T>* z);
+    void removeFixup(RBTreeNode<T>* x);
 
     void transplant(RBTreeNode<T>* u, RBTreeNode<T>* v); // replaces subtree of u with that of v
 
@@ -235,8 +235,58 @@ void RBTree<T>::remove(T val) {
 }
 
 template <typename T>
-void RBTree<T>::removeFixup(RBTreeNode<T>* z) {
-
+void RBTree<T>::removeFixup(RBTreeNode<T>* x) {
+    while(x != root && x->color == BLACK) {
+        if(x == x->parent->left) {
+            RBTreeNode<T>* w = x->parent->right;
+            if(w->color == RED) {
+                w->color = BLACK;
+                x->parent->color = RED;
+                leftRotate(x->parent);
+                w = x->parent->right;
+            }
+            if(w->left->color == BLACK && w->right->color == BLACK) {
+                w->color = RED;
+                x = x->parent;
+            } else {
+                if(w->right->color == BLACK) {
+                    w->left->color = BLACK;
+                    w->color = RED;
+                    rightRotate(w);
+                    w = x->parent->right;
+                }
+                w->color = x->parent->color;
+                x->parent->color = BLACK;
+                w->right->color = BLACK;
+                leftRotate(x->parent);
+                x = root;
+            }
+        } else {
+            RBTreeNode<T>* w = x->parent->left;
+            if(w->color == RED) {
+                w->color = BLACK;
+                x->parent->color = RED;
+                leftRotate(x->parent);
+                w = x->parent->left;
+            }
+            if(w->right->color == BLACK && w->left->color == BLACK) {
+                w->color = RED;
+                x = x->parent;
+            } else {
+                if(w->left->color == BLACK) {
+                    w->right->color = BLACK;
+                    w->color = RED;
+                    leftRotate(w);
+                    w = x->parent->left;
+                }
+                w->color = x->parent->color;
+                x->parent->color = BLACK;
+                w->left->color = BLACK;
+                rightRotate(x->parent);
+                x = root;
+            }
+        }
+    }
 }
 
 template <typename T>
