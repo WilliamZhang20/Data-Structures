@@ -276,14 +276,13 @@ void RBTree<T>::print() {
             numSpaces /= 2;
             printSpaces(numSpaces + 2*(height - level));
         }
-        
         if (curr.first == sentinel) { 
-            printSpaces(2*numSpaces + 1);
+            printSpaces(2*numSpaces + 2);
             continue; 
         }
         std::cout << curr.first->key;
-        // std::cout << (curr.first->color == RED ? "*" : "^");
-        printSpaces(2*numSpaces + 1);
+        std::cout << (curr.first->color == RED ? "*" : "^");
+        printSpaces(2*numSpaces + 2);
         treeQ.push({curr.first->left, curr.second + 1});
         treeQ.push({curr.first->right, curr.second + 1});
     }
