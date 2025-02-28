@@ -2,7 +2,6 @@
 #include <iostream>
 #include <queue>
 #include <utility>
-#include <vector>
 #include <cmath>
 
 typedef enum { RED, BLACK } Color;
@@ -263,23 +262,30 @@ void RBTree<T>::print() {
     treeQ.push({root, 0});
     int level = -1;
 
-    int numSpaces = (1 << (height - 1)) * 2; 
+    int numSpaces = (1 << (height)) * 2; 
     
     while (!treeQ.empty()) {
         std::pair<RBTreeNode<T>*, int> curr = treeQ.front();
         treeQ.pop();
-        if (curr.first == sentinel) { continue; }
+        auto printSpaces = [&]() {
+            for(int i=0; i<numSpaces; i++) { std::cout << " ";}
+            std::cout << " ";
+            for(int i=0; i<numSpaces; i++) { std::cout << " ";}
+        };
         if (curr.second > level) {
             level = curr.second;
             std::cout << "\n";
             for(int i=0; i<numSpaces; i++) { std::cout << " "; }
             numSpaces /= 2;
         }
+        
+        if (curr.first == sentinel) { 
+            printSpaces();
+            continue; 
+        }
         std::cout << curr.first->key;
         std::cout << (curr.first->color == RED ? "*" : "^");
-        for(int i=0; i<numSpaces; i++) { std::cout << " ";}
-        std::cout << " ";
-        for(int i=0; i<numSpaces; i++) { std::cout << " ";}
+        printSpaces();
         treeQ.push({curr.first->left, curr.second + 1});
         treeQ.push({curr.first->right, curr.second + 1});
     }
