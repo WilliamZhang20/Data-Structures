@@ -2,6 +2,7 @@
 #include <iostream>
 #include <queue>
 #include <utility>
+#include <vector>
 #include <cmath>
 
 typedef enum { RED, BLACK } Color;
@@ -260,28 +261,27 @@ void RBTree<T>::print() {
     int height = ceil(log(size + 1.0)/log(2.0));  // Calculate tree height
     std::queue<std::pair<RBTreeNode<T>*, int>> treeQ;
     treeQ.push({root, 0});
-    std::vector<std::vector<std::string>> levels; 
+    int level = -1;
 
+    int numSpaces = (1 << (height - 1)) * 2; 
+    
     while (!treeQ.empty()) {
         std::pair<RBTreeNode<T>*, int> curr = treeQ.front();
         treeQ.pop();
         if (curr.first == sentinel) { continue; }
-        if (curr.second >= levels.size()) { levels.push_back({}); }
-        std::string nodeStr = std::to_string(curr.first->key);
-        nodeStr += (curr.first->color == RED ? "*" : "^");
-        levels[curr.second].push_back(nodeStr);
+        if (curr.second > level) {
+            level = curr.second;
+            std::cout << "\n";
+            for(int i=0; i<numSpaces; i++) { std::cout << " "; }
+            numSpaces /= 2;
+        }
+        std::cout << curr.first->key;
+        std::cout << (curr.first->color == RED ? "*" : "^");
+        for(int i=0; i<numSpaces; i++) { std::cout << " ";}
+        std::cout << " ";
+        for(int i=0; i<numSpaces; i++) { std::cout << " ";}
         treeQ.push({curr.first->left, curr.second + 1});
         treeQ.push({curr.first->right, curr.second + 1});
     }
-    int numSpaces = (1 << (height - 1)) * 2; 
-    for (int i = 0; i < levels.size(); ++i) {
-        int levelSpacing = (1 << (height - i - 1)) * 2;
-        for (size_t j = 0; j < levels[i].size(); ++j) {
-            std::cout << std::string(numSpaces / 2, ' ');
-            std::cout << levels[i][j] << " ";
-            std::cout << std::string(levelSpacing / 2, ' ');
-
-            numSpaces /= 2;
-        } std::cout << std::endl;
-    }
+    std::cout << "\n";
 }
