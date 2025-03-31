@@ -22,10 +22,20 @@ public:
             delete children[i]; // will recurse
         }
     }
-    BTreeNode(BTreeNode<T>& node) : n(node.n), leaf(node.leaf), keys(node.keys), children(node.children) {}
+    BTreeNode(BTreeNode<T>& node) : n(node.n), leaf(node.leaf), keys(node.keys) {
+        // Deep copy the children
+        children.reserve(node.children.size()); // Reserve space
+        for (auto child : node.children) {
+            if (child) {
+                children.push_back(new BTreeNode<T>(*child)); // Recursively copy child nodes
+            } else {
+                children.push_back(nullptr);
+            }
+        }
+    }
     BTreeNode(BTreeNode<T>&& node) noexcept : n(node.n), leaf(node.leaf), keys(std::move(node.keys)), children(std::move(node.children)) {
         // node - vector move defaults to std::vector move constructor     
-        std::cout << "move constructor called\n";   
+        node.children.clear();
     }
     BTreeNode& operator=(BTreeNode<T>& rhs) { // perform deep copy
         if(this != &rhs) {
@@ -39,11 +49,17 @@ public:
     BTreeNode& operator=(BTreeNode<T>&& rhs) noexcept {
         std::cout << "move assignment called\n";
         if (this != &rhs) {
+            for (auto child : children) {
+                delete child;
+            }
+            children.clear(); // Prevent accidental reuse
+    
             n = rhs.n;
             leaf = rhs.leaf;
             keys = std::move(rhs.keys);
             children = std::move(rhs.children);
-
+    
+            rhs.children.clear(); // Prevent double delete
             rhs.n = 0;
             rhs.leaf = true;
         }
@@ -74,13 +90,15 @@ public:
     ~BTree() {
         delete root;
     }
-    BTree(BTree<T> &tree) : t(tree.t), root(tree.root) {}
+    BTree(BTree<T> &tree) : t(tree.t), root(new BTreeNode<T>(*tree.root)) {
+        // must perform a deep copy of root
+    }
     BTree(BTree<T> &&tree) noexcept : t(tree.t), root(std::exchange(tree.root, nullptr)) {}
     BTree& operator=(BTree<T>& rhs) {
         if (this != &rhs) {
             delete root;
             t = rhs.t;
-            root = new BTreeNode<T>(*rhs.root);
+            root = rhs.root ? new BTreeNode<T>(*rhs.root) : nullptr;
         }
         return *this;
     }
@@ -90,6 +108,7 @@ public:
             t = rhs.t;
             root = std::exchange(rhs.root, nullptr); // trash the rhs, make this own its addr
         }
+        return *this;
     }
     void insert(T k) { // 2 cases - full or not full
         // calls recursive helper insert_nonfull
@@ -106,14 +125,19 @@ public:
             insert_nonfull(r, k);
         }
     }
+
+    std::pair<BTreeNode<T>*, int> search(T k) {
+        return search(root, k);
+    }
     
     // Returns pointer to node + index within node that it was found
     std::pair<BTreeNode<T>*, int> search(BTreeNode<T>* x, T k) {
-        int i = 1;
-        while(i <= x->n && k > x->keys[i]) {
+        int i = 0;
+        std::cout << "currently at " << x->keys[0] << "\n";
+        while(i < x->n && k > x->keys[i]) {
             i += 1;
         } // proceed from left to right of page until appropriate range discovered
-        if(i <= x->n && k == x->keys[i]) {
+        if(i < x->n && k == x->keys[i]) {
             // the node may be the destination...if so, return
             return std::pair{x, i};
         } // otherwise, continue at an additional depth
@@ -121,7 +145,7 @@ public:
             return std::pair{nullptr, -1}; // garbage pair
         }
         // "else case"
-        return search(x->keys[i], k); // reads the deeper "disk" + continue
+        return search(x->children[i], k); // reads the deeper "disk" + continue
     }
 
     void printBTree() {
@@ -158,9 +182,8 @@ public:
     }
 private:
     BTreeNode<T>* root;
-    size_t t; // page-characteristic value
-    int h;
-    
+    size_t t; // page-characteristic degree
+
     void splitChild(BTreeNode<T>* x, int i) {
         BTreeNode<T>* z = new BTreeNode<T>(); // New node to the right
         BTreeNode<T>* y = x->children[i];    // Original node that was oversized
