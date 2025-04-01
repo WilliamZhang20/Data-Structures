@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -13,76 +12,102 @@ class BTreeNode {
     friend class BTree<T>;
 public:
     // Rule of 5 class!
-    BTreeNode() {
-        n = 0;
-        leaf = true;
-    }
-    ~BTreeNode() {
-        for(size_t i=0; i<children.size(); i++) {
-            delete children[i]; // will recurse
-        }
-    }
-    BTreeNode(BTreeNode<T>& node) : n(node.n), leaf(node.leaf), keys(node.keys) {
-        // Deep copy the children
-        children.reserve(node.children.size()); // Reserve space
-        for (auto child : node.children) {
-            if (child) {
-                children.push_back(new BTreeNode<T>(*child)); // Recursively copy child nodes
-            } else {
-                children.push_back(nullptr);
-            }
-        }
-    }
-    BTreeNode(BTreeNode<T>&& node) noexcept : n(node.n), leaf(node.leaf), keys(std::move(node.keys)), children(std::move(node.children)) {
-        // node - vector move defaults to std::vector move constructor     
-        node.children.clear();
-    }
-    BTreeNode& operator=(BTreeNode<T>& rhs) { // perform deep copy
-        if(this != &rhs) {
-            n = rhs.n;
-            leaf = rhs.leaf;
-            keys = rhs.keys;
-            children = rhs.children;
-        }
-        return *this;
-    }
-    BTreeNode& operator=(BTreeNode<T>&& rhs) noexcept {
-        // std::cout << "move assignment called\n";
-        if (this != &rhs) {
-            for (auto child : children) {
-                delete child;
-            }
-            children.clear(); // Prevent accidental reuse
-    
-            n = rhs.n;
-            leaf = rhs.leaf;
-            keys = std::move(rhs.keys);
-            children = std::move(rhs.children);
-    
-            rhs.children.clear(); // Prevent double delete
-            rhs.n = 0;
-            rhs.leaf = true;
-        }
-        return *this;
-    }
-    const T& operator[](size_t i) {
-        return keys[i];
-    }
+    BTreeNode();
+    ~BTreeNode();
+    BTreeNode(BTreeNode<T>& node);
+    BTreeNode(BTreeNode<T>&& node) noexcept;
+    BTreeNode& operator=(BTreeNode<T>& rhs);
+    BTreeNode& operator=(BTreeNode<T>&& rhs) noexcept;
+    const T& operator[](size_t i);
 private:
     size_t n; // # of keys stored in page
     std::vector<T> keys; // the keys themselves
     std::vector<BTreeNode*> children; // pointers to children of size n+1
     bool leaf; // whether it is a leaf page
-    void printKeys() {
-        for(size_t i=0; i<n; i++) {
-            std::cout << keys[i] << " ";
-        }
-        std::cout << "\t"; // end of page/node
-    }
+    void printKeys();
 };
 
 template <typename T>
+BTreeNode<T>::BTreeNode() {
+    n = 0;
+    leaf = true;
+}
+
+template <typename T>
+BTreeNode<T>::~BTreeNode() {
+    for(size_t i=0; i<children.size(); i++) {
+        delete children[i]; // will recurse
+    }
+}
+
+template <typename T>
+BTreeNode<T>::BTreeNode(BTreeNode<T>& node) : n(node.n), leaf(node.leaf), keys(node.keys) {
+    // Deep copy the children
+    children.reserve(node.children.size()); // Reserve space
+    for (auto child : node.children) {
+        if (child) {
+            children.push_back(new BTreeNode<T>(*child)); // Recursively copy child nodes
+        } else {
+            children.push_back(nullptr);
+        }
+    }
+}
+
+template <typename T>
+BTreeNode<T>::BTreeNode(BTreeNode<T>&& node) noexcept : n(node.n), leaf(node.leaf), keys(std::move(node.keys)), children(std::move(node.children)) {
+    // node - vector move defaults to std::vector move constructor     
+    node.children.clear();
+}
+
+template <typename T>
+BTreeNode<T>& BTreeNode<T>::operator=(BTreeNode<T>& rhs) { // perform deep copy
+    if(this != &rhs) {
+        n = rhs.n;
+        leaf = rhs.leaf;
+        keys = rhs.keys;
+        children = rhs.children;
+    }
+    return *this;
+}
+
+template <typename T>
+BTreeNode<T>& BTreeNode<T>::operator=(BTreeNode<T>&& rhs) noexcept {
+    // std::cout << "move assignment called\n";
+    if (this != &rhs) {
+        for (auto child : children) {
+            delete child;
+        }
+        children.clear(); // Prevent accidental reuse
+
+        n = rhs.n;
+        leaf = rhs.leaf;
+        keys = std::move(rhs.keys);
+        children = std::move(rhs.children);
+
+        rhs.children.clear(); // Prevent double delete
+        rhs.n = 0;
+        rhs.leaf = true;
+    }
+    return *this;
+}
+
+template <typename T>
+const T& BTreeNode<T>::operator[](size_t i) {
+    return keys[i];
+}
+
+template <typename T>
+void BTreeNode<T>::printKeys() {
+    for(size_t i=0; i<n; i++) {
+        std::cout << keys[i] << " ";
+    }
+    std::cout << "\t"; // end of page/node
+}
+
+template <typename T>
 class BTree {
+    BTreeNode<T>* root;
+    size_t t; // page-characteristic degree
 public:
     BTree(size_t t) {
         this->t = t;
@@ -178,17 +203,17 @@ public:
         }
         // no need to handle underfull root - it is allowed to be empty
         deleteKeyHelper(root, k);
-        if(root->n == 0) { // somehow potentially the root was borrowed out...
+        if(root->n == 0) {
+            // somehow potentially the root was borrowed out...
             BTreeNode<T>* oldRoot = root;
+            std::cout << root->keys.size() << "\n";
             // Replace root with either nothing (if tree emptied) or its only child!
             root = root->children.empty()? nullptr : root->children[0];
+            oldRoot->children.clear(); // clear away blocker
             delete oldRoot; // address redundant
         }
     }
 private:
-    BTreeNode<T>* root;
-    size_t t; // page-characteristic degree
-
     void splitChild(BTreeNode<T>* x, int i) {
         BTreeNode<T>* z = new BTreeNode<T>(); // New node to the right
         BTreeNode<T>* y = x->children[i];    // Original node that was oversized
@@ -254,17 +279,21 @@ private:
             while(i >= 0 && k < x->keys[i]) {
                 i -= 1;
             }
+            if(i == -1) {
+                throw std::runtime_error("Exception 3: out of range!!");
+            }
             if(x->keys[i] == k) {
                 x->keys.erase(x->keys.begin() + i);
                 x->n -= 1;
             }
         }
         else {
-            while(i >= 0 && k < x->keys[i]) {
+            // For some odd reason we do > 0 - for a non-leaf node search...
+            while(i > 0 && k < x->keys[i]) {
                 i -= 1; // search for node in k's value range
             }
             if(i == -1) {
-                throw std::runtime_error("EXCEPTION: out of range!!");
+                throw std::runtime_error("EXCEPTION: 2 out of range!!");
             }
             // Case 2: if arrived at an internal node with k
             if(x->keys[i] == k) {
@@ -314,7 +343,7 @@ private:
                     kIdx -= 1; // search for node in k's value range
                 }
                 if(kIdx == -1) {
-                    throw std::runtime_error("EXCEPTION: out of range!!");
+                    throw std::runtime_error("EXCEPTION: 1 out of range!!");
                 }
                 // std::cout << "child index " << kIdx << "\n";
                 BTreeNode<T>* child = x->children[kIdx];
@@ -322,13 +351,17 @@ private:
                     // std::cout << "donations needed\n";
                     // try left sibling
                     if(kIdx > 0 && x->children[kIdx-1]->n >= t) {
+                        // std::cout << "merging left\n";
                         BTreeNode<T>* leftSibling = x->children[kIdx - 1];
                         child->keys.insert(child->keys.begin(), x->keys[kIdx - 1]);
                         x->keys[kIdx - 1] = leftSibling->keys.back();
                         leftSibling->keys.pop_back();
                         // Move the last child of the left sibling into the child node
-                        child->children.insert(child->children.begin(), leftSibling->children.back());
-                        leftSibling->children.pop_back();  // Remove the last child from the left sibling
+                        if (!leftSibling->children.empty()) {
+                            // if leftSibling a leaf - then no children!
+                            child->children.insert(child->children.begin(), leftSibling->children.back());
+                            leftSibling->children.pop_back();  // Remove the last child from the left sibling
+                        }
                         child->n += 1;
                         leftSibling->n -= 1;
                     }
@@ -339,22 +372,24 @@ private:
                         x->keys[kIdx] = rightSibling->keys.front();
                         rightSibling->keys.erase(rightSibling->keys.begin());
                         // transfer children around
-                        child->children.push_back(rightSibling->children.front());
-                        rightSibling->children.erase(rightSibling->children.begin());
-
+                        if (!rightSibling->children.empty()) {
+                            child->children.push_back(rightSibling->children.front());
+                            rightSibling->children.erase(rightSibling->children.begin());
+                        }
                         child->n += 1;
                         rightSibling->n -= 1;
                     }
                     // 3b: if all siblings underfull - merge with first available sibling
                     else {
+                        // std::cout << "merging siblings\n";
                         if(kIdx > 0) {
+                            // std::cout << "merging with left\n";
                             BTreeNode<T>* leftSibling = x->children[kIdx - 1];
                             mergeNodes(leftSibling, child, x->keys[kIdx - 1]);
                             x->keys.erase(x->keys.begin() + kIdx - 1);
-                            // std::cout << "erasing " << x->children[kIdx]->keys[0] << "\n";
                             x->children.erase(x->children.begin() + kIdx);
+                            
                             x->n -= 1;
-                            delete child;
                         }
                         else {
                             BTreeNode<T>* rightSibling = x->children[kIdx + 1];
