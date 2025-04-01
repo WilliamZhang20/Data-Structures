@@ -1,5 +1,6 @@
 #include <iostream>
 #include "B-Tree.h"
+#include <stdexcept>
 
 template<typename T>
 void printTreeFormat(BTree<T> tree) {
@@ -12,10 +13,14 @@ template<typename T>
 void deleteTreeVal(BTree<T>& tree, T val) {
     std::cout << "searching for " << val << "\n";
     std::pair<BTreeNode<T>*, int> pos = tree.search(val);
-    std::cout << "Found at " << pos.first << " with index " << pos.second << "\n";
     if (pos.first) {
-        tree.remove(val);
-        printTreeFormat(tree);
+        std::cout << "Using found value of " << (*pos.first)[pos.second] << "\n";
+        try {
+            tree.remove(val);
+            printTreeFormat(tree);
+        } catch(const std::exception& e) {
+            std::cout << e.what() << "\n";
+        }
     }
 }
 
@@ -29,16 +34,16 @@ BTree<char> testCase1() {
     tree.insert('Q');
     tree.insert('V');
     tree.insert('Z');
-    printTreeFormat(tree);
+    //printTreeFormat(tree);
     tree.insert('L');
     tree.insert('N');
     tree.insert('S');
-    printTreeFormat(tree);
+    //printTreeFormat(tree);
     tree.insert('E');
     tree.insert('P');
     tree.insert('O');
     tree.printBTree();
-    printTreeFormat(tree);
+    //printTreeFormat(tree);
     tree.insert('M');
     tree.insert('F');
     return tree;
@@ -51,7 +56,7 @@ BTree<char> testCase2() {
     for(int i=0; i<seq.size(); i++) {
         tree.insert(seq[i]);
         if(i % 3 == 0) {
-            printTreeFormat(tree);
+            //printTreeFormat(tree);
         }
     }
     return tree;

@@ -47,7 +47,7 @@ public:
         return *this;
     }
     BTreeNode& operator=(BTreeNode<T>&& rhs) noexcept {
-        std::cout << "move assignment called\n";
+        // std::cout << "move assignment called\n";
         if (this != &rhs) {
             for (auto child : children) {
                 delete child;
@@ -64,6 +64,9 @@ public:
             rhs.leaf = true;
         }
         return *this;
+    }
+    const T& operator[](size_t i) {
+        return keys[i];
     }
 private:
     size_t n; // # of keys stored in page
@@ -133,7 +136,7 @@ public:
     // Returns pointer to node + index within node that it was found
     std::pair<BTreeNode<T>*, int> search(BTreeNode<T>* x, T k) {
         int i = 0;
-        std::cout << "currently at " << x->keys[0] << "\n";
+        // std::cout << "currently at " << x->keys[0] << "\n";
         while(i < x->n && k > x->keys[i]) {
             i += 1;
         } // proceed from left to right of page until appropriate range discovered
@@ -141,7 +144,7 @@ public:
             // the node may be the destination...if so, return
             return std::pair{x, i};
         } // otherwise, continue at an additional depth
-        else if(x->leaf) {
+        else if(x->leaf) { // no range of k?
             return std::pair{nullptr, -1}; // garbage pair
         }
         // "else case"
@@ -170,7 +173,9 @@ public:
 
     // No pseudocode found in CLRS
     void remove(T k) { // remove node with value k
-        if(!root) { throw std::runtime_error("Empty tree!"); }
+        if(!root) { 
+            throw std::runtime_error("EXCEPTION: Empty tree!!!!"); 
+        }
         // no need to handle underfull root - it is allowed to be empty
         deleteKeyHelper(root, k);
         if(root->n == 0) { // somehow potentially the root was borrowed out...
@@ -241,6 +246,7 @@ private:
 
     // Considering moving repetetive parts of cases 2 & 3 into own (inline) methods
     void deleteKeyHelper(BTreeNode<T>* x, T k) {
+        // std::cout << "currently at " << x->keys[0] << " with " << x->n << "\n";
         // search the tree & find destination!
         size_t i = x->n - 1;
         // Case 1: if arrive at leaf - delete key k if existing!
@@ -257,56 +263,72 @@ private:
             while(i >= 0 && k < x->keys[i]) {
                 i -= 1; // search for node in k's value range
             }
+            if(i == -1) {
+                throw std::runtime_error("EXCEPTION: out of range!!");
+            }
             // Case 2: if arrived at an internal node with k
             if(x->keys[i] == k) {
+                // std::cout << "case 2\n";
                 // 2a: if predecessor k' of good capacity, delete k' recursively & replace value on k
                 BTreeNode<T>* predec = x->children[i];
-                T kprime = predec->keys[predec->keys.size()-1];
+                // std::cout << "found child at " << i << " with " <<  x->children[i]->keys[0] << "\n";
                 if(predec->n > t-1) {
-                    deleteKeyHelper(predec, kprime);
+                    T kprime = predec->keys[predec->keys.size()-1];
+                    // std::cout << "kprime predec " << kprime << "\n";
+                    // std::cout << "recursive call 1\n";
                     x->keys[i] = kprime; // value replacement
+                    deleteKeyHelper(predec, kprime);
                 }
                 // 2b: predec. underfull, but not succ. - do the same as a but for succ.
                 else {
                     BTreeNode<T>* succ = x->children[i+1];
+                    T kprime = succ->keys[0];
+                    // std::cout << "kprime succ " << kprime << "\n";
                     if(succ->n > t-1) {
-                        deleteKeyHelper(succ, k);
-                        x->keys[i] = succ->keys[0];
+                        // std::cout << "recursive call 2\n";
+                        x->keys[i] = kprime;
+                        deleteKeyHelper(succ, kprime);
                     }
                     // 2c: both pred. and succ. underfull - merge predec & succ with k, free succ., rm k rec.
                     else {
                         // x will have no more k and no more x.c_i+1, x_ci should be full
                         mergeNodes(predec, succ, k);
                         x->n -= 1;
+                        x->children.erase(x->children.begin() + i + 1); 
                         delete succ;
                         x->keys.erase(x->keys.begin()+i);
                         // deletion now depends on x.c_i & its children
+                        // std::cout << "recursive call 3\n";
                         deleteKeyHelper(predec, k);
                     }
                 }
             }
             // Case 3: internal node, en route to search for k
             else {
+                // std::cout << "Case 3 \n";
                 // 3a: if child of k's range underfull but sibling has capacity, borrow
                 // (with view from the parent)
-                size_t kIdx = 0;
-                for(size_t j=0; j<x->children.size(); j++) {
-                    if(x->children[j]->keys[x->children[j]->keys.size()-1] >= k) {
-                        kIdx = j;
-                        break;
-                    }
-                    else if(j == x->children.size() - 1) {
-                        throw "Tree Structure Wrong";
-                    }
+                size_t kIdx = x->children.size() - 1; // search through n + 1 children!!!
+                while(kIdx >= 0 && k < x->children[kIdx]->keys[0]) {
+                    // std::cout << "search " << x->children[kIdx]->keys[0] << " ";
+                    kIdx -= 1; // search for node in k's value range
                 }
+                if(kIdx == -1) {
+                    throw std::runtime_error("EXCEPTION: out of range!!");
+                }
+                // std::cout << "child index " << kIdx << "\n";
                 BTreeNode<T>* child = x->children[kIdx];
                 if(child->n == t-1) {
+                    // std::cout << "donations needed\n";
                     // try left sibling
                     if(kIdx > 0 && x->children[kIdx-1]->n >= t) {
                         BTreeNode<T>* leftSibling = x->children[kIdx - 1];
                         child->keys.insert(child->keys.begin(), x->keys[kIdx - 1]);
                         x->keys[kIdx - 1] = leftSibling->keys.back();
                         leftSibling->keys.pop_back();
+                        // Move the last child of the left sibling into the child node
+                        child->children.insert(child->children.begin(), leftSibling->children.back());
+                        leftSibling->children.pop_back();  // Remove the last child from the left sibling
                         child->n += 1;
                         leftSibling->n -= 1;
                     }
@@ -316,6 +338,10 @@ private:
                         child->keys.push_back(x->keys[kIdx]);
                         x->keys[kIdx] = rightSibling->keys.front();
                         rightSibling->keys.erase(rightSibling->keys.begin());
+                        // transfer children around
+                        child->children.push_back(rightSibling->children.front());
+                        rightSibling->children.erase(rightSibling->children.begin());
+
                         child->n += 1;
                         rightSibling->n -= 1;
                     }
@@ -325,6 +351,8 @@ private:
                             BTreeNode<T>* leftSibling = x->children[kIdx - 1];
                             mergeNodes(leftSibling, child, x->keys[kIdx - 1]);
                             x->keys.erase(x->keys.begin() + kIdx - 1);
+                            // std::cout << "erasing " << x->children[kIdx]->keys[0] << "\n";
+                            x->children.erase(x->children.begin() + kIdx);
                             x->n -= 1;
                             delete child;
                         }
@@ -333,10 +361,13 @@ private:
                             mergeNodes(child, rightSibling, x->keys[kIdx]);
                             x->keys.erase(x->keys.begin() + kIdx);
                             x->n -= 1;
+                            // std::cout << "erasing " << x->children[kIdx]->keys[0] << "\n";
+                            x->children.erase(x->children.begin() + kIdx + 1);
                             delete rightSibling;
                         }
                     }
                 }
+                // std::cout << "recursive call 4\n";
                 deleteKeyHelper(x->children[kIdx], k);
             }
         }   

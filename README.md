@@ -6,9 +6,10 @@ Current list (work in progress):
 2. B-Tree
 3. Binary Heap
 4. AVL Tree
-5. Red-Black 
+5. Red-Black Tree
 
 Upcoming:
+- Disjoint Set
 - Sparse Table
 - Segment Tree
-- Union Find
+- Trie
