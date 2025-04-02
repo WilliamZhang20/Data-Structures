@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -207,6 +206,7 @@ public:
         if(root->n == 0) {
             // somehow potentially the root was borrowed out...
             BTreeNode<T>* oldRoot = root;
+            std::cout << root->keys.size() << "\n";
             // Replace root with either nothing (if tree emptied) or its only child!
             root = root->children.empty()? nullptr : root->children[0];
             oldRoot->children.clear(); // clear away blocker
@@ -382,14 +382,14 @@ private:
                     }
                     // 3b: if all siblings underfull - merge with first available sibling
                     else {
-                       // std::cout << "merging siblings\n";
+                        // std::cout << "merging siblings\n";
                         if(kIdx > 0) {
                             // std::cout << "merging with left\n";
                             BTreeNode<T>* leftSibling = x->children[kIdx - 1];
                             mergeNodes(leftSibling, child, x->keys[kIdx - 1]);
                             x->keys.erase(x->keys.begin() + kIdx - 1);
                             x->children.erase(x->children.begin() + kIdx);
-                            delete child;
+                            
                             x->n -= 1;
                         }
                         else {
