@@ -21,6 +21,8 @@ void deleteTreeVal(BTree<T>& tree, T val) {
         } catch(const std::exception& e) {
             std::cout << e.what() << "\n";
         }
+    } else {
+        std::cout << "Did not find " << val << "\n";
     }
 }
 
@@ -62,6 +64,41 @@ BTree<char> testCase2() {
     return tree;
 }
 
+BTree<char> testCase3() {
+    BTree<char> tree(2);
+
+    tree.insert('Q');
+    tree.insert('V');
+    tree.insert('Z');
+    tree.insert('L');
+    tree.insert('N');
+    tree.insert('S');
+    tree.insert('E');
+    tree.insert('P');
+    tree.insert('O');
+    tree.insert('M');
+    tree.insert('F');
+    
+    printTreeFormat(tree);
+    tree.remove('V');
+    printTreeFormat(tree);
+    
+    tree.remove('N');
+    printTreeFormat(tree);
+
+    tree.remove('Z');
+    printTreeFormat(tree);
+    
+    tree.remove('O');
+    printTreeFormat(tree);
+    
+    tree.remove('L');
+    printTreeFormat(tree);
+    tree.remove('E');
+    printTreeFormat(tree);
+    return tree;
+}
+
 int main() {
     std::cout << "NOTE: this follows pre-emptive merge + split once at max size\n";
     std::cout << "first tree\n";
@@ -73,6 +110,10 @@ int main() {
     BTree<char> tree2 = testCase2();
     tree2.printBTree();
 
-    deleteTreeVals(tree2, 'P', 'Y', 'M', 'W', 'Q');
+    deleteTreeVals(tree2, 'P', 'Y', 'M', 'W', 'Q', 'Z');
+
+    std::cout << "3rd tree\n";
+    BTree<char> tree3 = testCase3();
+
     return 0;
 }
