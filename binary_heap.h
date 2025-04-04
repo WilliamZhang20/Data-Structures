@@ -1,12 +1,61 @@
 #include <vector>
 #include <iostream>
+#include <functional>
+#include <cassert>
 
-template <typename T>
-class Heap { // specifically, a min heap
+template <typename T, typename Predicate = std::greater<T>>
+class BinaryHeap {
 public:
-    Heap() {
-        heap = {};
+    BinaryHeap() = default;
+    BinaryHeap(std::vector<T> vec) {
+        heap = vec;
+        build_heap();
     }
+    int length() {
+        return heap.size();
+    }
+    void build_heap() {
+        for (int i = (heap.size() / 2) - 1; i >= 0; --i) {
+            heapifyDown(i);
+        }
+    }
+    T remove(int i) {
+        T val = heap[i];
+        heap[i] = heap[heap.size() - 1];
+        heap.pop_back();
+        heapifyDown(i);
+        return val;
+    }
+    T& top(int i) {
+        assert(!heap.size().empty());
+        return heap[0];
+    }
+    template <typename ...Args>
+    void insert(Args&&... args) {
+        heap.emplace_back(std::forward<Args>(args)...);
+        heapifyUp(heap.size() - 1);
+    }
+    T extract_min() {
+        return remove(0);
+    }
+    bool empty() {
+        return heap.size() == 0;
+    }
+    void print() {
+        for(T& val: heap) {
+            std::cout << val << " ";
+        } std::cout << std::endl;
+    }
+private:
+    std::vector<T> heap; // heap contents in dynamic array
+
+    void heapifyUp(int i, Predicate p = Predicate()) {
+        while(i >= 0 && p(heap[parent(i)], heap[i])) { // if parent bigger move parent down and swap
+            std::swap(heap[i], heap[parent(i)]);
+            i = parent(i);
+        }
+    }
+
     int left(int i) {
         return 2*i+1;
     }
@@ -16,53 +65,22 @@ public:
     int parent(int i) {
         return (i - 1) / 2;
     }
-    int length() {
-        return heap.size();
-    }
-    void min_heapify(int i) {
+
+    void heapifyDown(int i, Predicate p = Predicate()) {
         int l = left(i);
         int r = right(i);
-        int smallest;
-        if(l <= heap.size() && *heap[l] > *heap[i]) {
+        int smallest = i;
+        if(l < heap.size() && p(heap[i], heap[l])) {
             smallest = l;
         } else {
             smallest = i;
         }
-        if(r <= heap.size() && *heap[r] > *heap[smallest]) { // right might be too big or too small...
+        if(r < heap.size() && p(heap[smallest], heap[r])) { // right might be too big or too small...
             smallest = r;
         }
         if(smallest != i) {
-            T* temp = heap[i];
-            heap[i] = heap[smallest];
-            heap[smallest] = temp;
-            min_heapify(smallest);
+            std::swap(heap[i], heap[smallest]);
+            heapifyDown(smallest);
         }
     }
-    void build_heap() {
-        for (int i = (heap.size() / 2) - 1; i >= 0; --i) {
-            min_heapify(i);
-        }
-    }
-    void insert(T& elt) { // insert + propagate up if needed
-        heap.push_back(&elt);
-        int i = heap.size() - 1;
-        while(i > 0 && *heap[parent(i)] > *heap[i]) {
-            T* temp = heap[i];
-            heap[i] = heap[parent(i)];
-            heap[parent(i)] = temp;
-            i = parent(i);
-        }
-    }
-    T* extract_min() {
-        T* val = heap[0];
-        heap[0] = heap[heap.size()-1];
-        heap.pop_back();
-        min_heapify(0);
-        return val;
-    }
-    bool empty() {
-        return heap.size() == 0;
-    }
-private:
-    std::vector<T*> heap; // modifies the
 };
