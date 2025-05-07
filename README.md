@@ -7,9 +7,10 @@ Current list (work in progress):
 3. Binary Heap
 4. AVL Tree
 5. Red-Black Tree
+6. Circular Queue
+7. Trie
 
 Upcoming:
 - Disjoint Set
 - Sparse Table
 - Segment Tree
-- Trie
