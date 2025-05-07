@@ -1,5 +1,3 @@
-#pragma once
-
 #include <iostream>
 #include <optional>
 #include <unordered_map>
@@ -22,7 +20,7 @@ public:
     ~Trie();
 
     void insert(const std::vector<T>& arr);
-    std::optional<T> search(const std::vector<T>& arr);
+    std::optional<std::vector<T>> search(const std::vector<T>& arr);
     bool startsWith(const std::vector<T>& arr);
 private:
     void destroyTrie(Node* node);
@@ -30,7 +28,10 @@ private:
 
 template <typename T>
 Trie<T>::~Trie() {
-    destroyTrie(&root_);
+    Node* current = &root_;
+    for(auto i = current->child_.begin(); i != current->child_.end(); i++) {
+        destroyTrie(i->second);
+    }
 }
 
 template <typename T>
@@ -52,7 +53,7 @@ void Trie<T>::insert(const std::vector<T>& arr) {
 }
 
 template <typename T>
-std::optional<T> Trie<T>::search(const std::vector<T>& arr) {
+std::optional<std::vector<T>> Trie<T>::search(const std::vector<T>& arr) {
     Node* curr = &root_;
     for(const T& c : arr) {
         if(curr->child_.find(c) == curr->child_.end()) {
