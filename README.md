@@ -1,7 +1,8 @@
 # Data Structures
 
-Most will follow the implementations from CLRS, translated into C++.
-Current list (work in progress):
+A collection of practical, manually implemented data structures in C++.
+
+Current list:
 1. Binary Search Tree
 2. B-Tree
 3. Binary Heap
