@@ -10,6 +10,7 @@ Current list:
 5. Red-Black Tree
 6. Circular Queue
 7. Trie
+8. Binomial Heap
 
 Upcoming:
 - Disjoint Set
