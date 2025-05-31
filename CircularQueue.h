@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-#include <vector>
 #include <utility>
 
 constexpr int initSize = 4;
@@ -16,11 +15,15 @@ public:
     CircularQueue(int size = initSize);
     CircularQueue(CircularQueue& rhs);
     CircularQueue(CircularQueue&& rhs);
+    CircularQueue& operator=(const CircularQueue& rhs);
     CircularQueue& operator=(CircularQueue&& rhs);
     ~CircularQueue();
 
-    template <typename ...Args>
-    void Push(Args&&... args);
+    template <class ...Args>
+    void push_range(Args&&... args);
+
+    template <class ...Args>
+    decltype(auto) emplace(Args&&...args);
 
     void enQueue(T val);
     void deQueue();
@@ -63,6 +66,34 @@ queue(std::exchange(rhs.queue, nullptr)), front_(rhs.front_), back_(rhs.back_), 
 {
 }
 
+
+template <typename T>
+CircularQueue<T>& CircularQueue<T>::operator=(const CircularQueue& rhs) {
+    if (this == &rhs) {
+        return *this; // self-assignment guard
+    }
+
+    // Allocate new memory for copy
+    T* newQueue = new T[rhs.capacity_];
+
+    // Copy elements from rhs in correct order (considering circular indexing)
+    for (int i = 0; i < rhs.size_; ++i) {
+        newQueue[i] = rhs.queue[(rhs.front_ + i) % rhs.capacity_];
+    }
+
+    // Delete old queue
+    delete[] queue;
+
+    // Assign new values
+    queue = newQueue;
+    capacity_ = rhs.capacity_;
+    size_ = rhs.size_;
+    front_ = 0;
+    back_ = size_ - 1;
+
+    return *this;
+}
+
 template <typename T>
 CircularQueue<T>& CircularQueue<T>::operator=(CircularQueue&& rhs) {
     if(this != rhs) {
@@ -88,18 +119,50 @@ CircularQueue<T>::~CircularQueue() {
 
 template <typename T>
 template <typename ...Args>
-void CircularQueue<T>::Push(Args&&... args) {
+void CircularQueue<T>::push_range(Args&&... args) {
     (enQueue(std::forward<Args>(args)), ...);
+}
+
+template <typename T>
+template <class ...Args>
+decltype(auto) CircularQueue<T>::emplace(Args&&... args) {
+    if (size_ == capacity_) {
+        capacity_ = capacity_ * 2 + 1;
+
+        T* b = static_cast<T*>(malloc(capacity_ * sizeof(T)));
+
+        for (int i = 0; i < size_; ++i) {
+            new (b + i) T(std::move_if_noexcept(queue[(front_ + i) % capacity_]));
+        }
+
+        // Split loop for destructors ensuring exception safety
+        for (int i = 0; i < size_; ++i) {
+            queue[(front_ + i) % capacity_].~T();
+        }
+        
+        free(queue);
+        queue = b;
+        front_ = 0;
+        back_ = size_ - 1;
+    }
+
+    back_ = (back_ + 1) % capacity_;
+    size_ += 1;
+
+    new (queue + back_) T(std::forward<Args>(args)...);
+
+    return queue[back_];
 }
 
 template <typename T>
 void CircularQueue<T>::enQueue(T val) {
     if(size_ == capacity_) {
         capacity_ *= 2;
-        T* b = new T[capacity_];
+        ++capacity_;
+        T* b = static_cast<T*>(malloc(capacity_ * sizeof(T)));
 
         for(int i=0; i<size_; ++i) {
-            b[i] = queue[(front_+i) % size_];
+            new (b + i) T{std::move_if_noexcept(queue[(front_+i) % size_])};
         }
 
         delete queue;
@@ -110,7 +173,7 @@ void CircularQueue<T>::enQueue(T val) {
     }
     size_ += 1;
     back_ = (back_ + 1) % capacity_;
-    queue[back_] = val;
+    new (queue + back_) T{val};
 }
 
 template <typename T>
